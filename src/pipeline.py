@@ -63,8 +63,13 @@ def run(patient_id: str, video: str | None = None, audio: str | None = None,
     if audio:
         from .audio.text_analytics import TextAnalyzer
         from .audio.transcriber import SpeechTranscriber
+        from .config import settings
         from .audio.voice_features import VoiceAnalyzer
-        transcript = SpeechTranscriber().transcribe(audio)
+        if settings.stt_provider == "http":
+            from .audio.http_transcriber import HttpSttTranscriber
+            transcript = HttpSttTranscriber().transcribe(audio)
+        else:
+            transcript = SpeechTranscriber().transcribe(audio)
         log.info("Transcrição: %s", transcript[:200])
         findings += TextAnalyzer().analyze(transcript, patient_id)
         _, voice_findings = VoiceAnalyzer().analyze(audio, patient_id, transcript)

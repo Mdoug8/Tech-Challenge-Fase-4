@@ -1,0 +1,53 @@
+{
+  "consulta_P001_normal.wav": {
+    "text": "Bom dia doutor. Estou me sentindo bem, dormi bem esta noite e tomei os remédios nos horários certos. Sem queixas hoje.",
+    "language": "pt",
+    "duration_seconds": 8.44,
+    "segments": [
+      {
+        "start": 0,
+        "end": 6.82,
+        "text": "Bom dia doutor. Estou me sentindo bem, dormi bem esta noite e tomei os remédios nos horários certos."
+      },
+      {
+        "start": 7.18,
+        "end": 8.28,
+        "text": "Sem queixas hoje."
+      }
+    ]
+  },
+  "consulta_P001_alerta.wav": {
+    "text": "Doutor, desde ontem estou com dor no peito e falta de ar. Tive tontura e quase desmaiei. Estou muito cansado e com medo.",
+    "language": "pt",
+    "duration_seconds": 9.3,
+    "segments": [
+      {
+        "start": 0,
+        "end": 4.06,
+        "text": "Doutor, desde ontem estou com dor no peito e falta de ar."
+      },
+      {
+        "start": 4.4,
+        "end": 6.66,
+        "text": "Tive tontura e quase desmaiei."
+      },
+      {
+        "start": 6.94,
+        "end": 9.12,
+        "text": "Estou muito cansado e com medo."
+      }
+    ]
+  },
+  "consulta_P001_lenta.wav": {
+    "text": "Eu, estou com muita fraqueza, e cansaço, não o consigo, falar direito, me sinto muito mal.",
+    "language": "pt",
+    "duration_seconds": 8.39,
+    "segments": [
+      {
+        "start": 0,
+        "end": 8.26,
+        "text": "Eu, estou com muita fraqueza, e cansaço, não o consigo, falar direito, me sinto muito mal."
+      }
+    ]
+  }
+}

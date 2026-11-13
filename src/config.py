@@ -22,6 +22,9 @@ class Settings:
     language_key: str = os.getenv("AZURE_LANGUAGE_KEY", "")
     eventgrid_endpoint: str = os.getenv("AZURE_EVENTGRID_ENDPOINT", "")
     eventgrid_key: str = os.getenv("AZURE_EVENTGRID_KEY", "")
+    stt_provider: str = os.getenv("STT_PROVIDER", "azure")  # "azure" | "http"
+    stt_api_url: str = os.getenv("STT_API_URL", "")
+    stt_api_key: str = os.getenv("STT_API_KEY", "")
     teams_webhook_url: str = os.getenv("TEAMS_WEBHOOK_URL", "")
     pose_model: str = os.getenv("POSE_MODEL", "yolov8n-pose.pt")
     detect_model: str = os.getenv("DETECT_MODEL", "yolov8n.pt")
