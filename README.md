@@ -7,6 +7,9 @@ detecções, com relatório HTML e vídeo anotado.
 O fluxo roda no Google Colab pelo notebook `notebooks/main.ipynb`, que baixa o dataset oficial sozinho.
 Nenhum vídeo precisa ser enviado.
 
+📄 **Relatório técnico:** [`docs/relatorio_tecnico.md`](docs/relatorio_tecnico.md) traz o fluxo multimodal, os modelos
+usados em cada tipo de dado, os resultados obtidos e exemplos de anomalias detectadas. As figuras ficam em `docs/img/`.
+
 ## O que o código faz
 
 1. **Baixa e converte** o pacote CholecT50 Challenge Validation (5 clipes) para o formato YOLO, dividindo por clipe.
@@ -32,6 +35,7 @@ paciente; o ID é só uma convenção do projeto.
 | `scripts/train_yolo_cholect50.py` | Treino e avaliação no clipe de teste |
 | `tests/` | Testes (`pytest`) dos indicadores e da conversão |
 | `docs/cholect50.md` | Dados, licença, limitações e status de validação |
+| `docs/relatorio_tecnico.md` | Relatório técnico: fluxo multimodal, modelos, resultados e anomalias detectadas |
 
 ## Como rodar no Google Colab
 
