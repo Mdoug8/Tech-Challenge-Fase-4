@@ -90,7 +90,9 @@ git push -u origin main
   instrumentos (mAP) tem métrica validável contra o dataset.
 - **Tempo:** a coordenada temporal é o número do frame original. Tempo em segundos só é interpretável em vídeo
   contínuo.
-- **Pose:** não há análise de postura nesta versão. OpenPose não se aplica a imagens laparoscópicas.
+- **Pose:** não é usada no vídeo cirúrgico, porque OpenPose e YOLOv8-pose não se aplicam a imagens
+  laparoscópicas. O código tem um módulo de pose para vídeo de fisioterapia (`--video-type physio`,
+  `src/video/pose_analyzer.py`), implementado mas **não avaliado** nesta entrega. Veja o relatório técnico.
 - **Dados de saúde:** o repositório não versiona vídeos nem dados de pacientes (`data/raw` está no `.gitignore`).
   Mantenha assim se trabalhar com dados reais (LGPD).
 

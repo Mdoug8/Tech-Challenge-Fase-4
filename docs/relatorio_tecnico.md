@@ -59,13 +59,19 @@ flowchart LR
 | Dado | Modelo / técnica | Arquivo | Saída (tipos de `Finding`) |
 |---|---|---|---|
 | Vídeo cirúrgico | **YOLOv8n** com ajuste fino no **CholecT50** (detecção de instrumentos) + regras sobre as detecções | `src/video/surgical_tools.py` | `instrumento_fora_do_campo`, `movimento_brusco_instrumento`, `ausencia_prolongada_de_instrumentos` |
-| Vídeo de fisioterapia | **YOLOv8-pose** (17 keypoints COCO, mesmo formato do OpenPose) → ângulos articulares; **YOLOv8** COCO para objetos fora da área | `src/video/pose_analyzer.py`, `src/video/object_detector.py` | desvios de amplitude articular, objeto fora da zona permitida |
+| Vídeo de fisioterapia | **YOLOv8-pose** (17 keypoints COCO, mesmo formato do OpenPose) → ângulos articulares; **YOLOv8** COCO para objetos fora da área | `src/video/pose_analyzer.py`, `src/video/object_detector.py` | desvios de amplitude articular, objeto fora da zona permitida. **Implementado, não avaliado nesta entrega** |
 | Áudio: fala | **Azure Speech to Text** ou API HTTP de transcrição (Knowlez); dicionário clínico de termos críticos; **Azure AI Language** (sentimento e frases-chave) | `src/audio/transcriber.py`, `http_transcriber.py`, `text_analytics.py` | `termo_critico`, `sentimento_negativo` |
 | Áudio: voz | **librosa**: proporção de pausas, taxa de fala, energia (RMS), jitter da F0 | `src/audio/voice_features.py` | indícios de fadiga ou disartria |
 | Sinais vitais | Limites clínicos por sinal; **z-score móvel** (janela de 12 leituras); **Isolation Forest** multivariado (FC, PAS, PAD, SpO₂) | `src/anomaly/vitals.py` | `fora_do_limite_clinico`, `mudanca_brusca`, `padrao_multivariado_anomalo` |
 | Prescrições | Regras: variação de dose ≥ 50%, suspensão abrupta, pares de interação | `src/anomaly/prescriptions.py` | `mudanca_de_dose`, `suspensao_abrupta`, `interacao_medicamentosa` |
-| Movimentação | Z-score sobre média móvel (picos) e sequência de imobilidade | `src/anomaly/movement.py` | `movimento_brusco`, `imobilidade_prolongada` |
+| Movimentação | Z-score sobre média móvel (picos) e sequência de imobilidade | `src/anomaly/movement.py` | `movimento_brusco`, `imobilidade_prolongada`. **Implementado, não avaliado nesta entrega** (depende da pose) |
 | Fusão | Fusão tardia ponderada com bônus de concordância | `src/fusion/risk_score.py` | score de risco e severidade |
+
+**Pose e movimentação.** A análise de pose não se aplica ao vídeo cirúrgico: em imagens laparoscópicas não há
+corpo inteiro para estimar keypoints, então OpenPose e YOLOv8-pose não são usados no CholecT50. O módulo de pose
+existe para vídeos de fisioterapia ou enfermaria (`python -m src.pipeline --video-type physio`) e alimenta a
+detecção de movimentação. Esse caminho está implementado e coberto por testes de unidade da movimentação, mas
+**não foi avaliado com vídeo real nesta entrega**, por isso não aparece na seção 5.
 
 **Detalhes das regras de vídeo cirúrgico.** O CholecT50 não tem rótulos de erro cirúrgico, então os desvios são
 heurísticas sobre as detecções:
@@ -368,6 +374,8 @@ e o Teams não foram testados com recursos reais (sem chaves); o caminho validad
 - **Limiares ilustrativos:** limites de sinais vitais, dicionário de termos, pares de interação e pesos da fusão
   foram definidos pela equipe do projeto e precisam ser validados com profissionais de saúde.
 - **Voz sintética:** a detecção de fadiga por voz não foi validada.
+- **Pose e movimentação:** implementadas para vídeo de fisioterapia, mas sem avaliação com vídeo real nesta
+  entrega. A entrega de vídeo avaliada é a cirúrgica (CholecT50), onde pose não se aplica.
 - **Licença:** o CholecT50 é CC BY-NC-SA 4.0 (uso não comercial). A página do desafio CholecTriplet2022 restringia
   a publicação de resultados no conjunto de validação; verificar antes de divulgar fora da disciplina.
 - **LGPD:** dados de saúde são sensíveis. O repositório não versiona vídeos, áudios reais nem pesos
