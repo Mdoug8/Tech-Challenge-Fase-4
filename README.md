@@ -1,93 +1,130 @@
-# Análise de vídeo cirúrgico com YOLOv8 (CholecT50)
+# 🏥 Sistema Multimodal de Triagem e Alerta Médico
 
-Tech Challenge Fase 4 · FIAP IA para Devs. Detecta instrumentos cirúrgicos em vídeo laparoscópico com um
-**YOLOv8** ajustado no dataset **CholecT50** e calcula indicadores operacionais de triagem a partir das
-detecções, com relatório HTML e vídeo anotado.
+![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
+![YOLOv8](https://img.shields.io/badge/YOLO-v8-yellow.svg)
+![OpenPose](https://img.shields.io/badge/OpenPose-Action-orange.svg)
+![Azure](https://img.shields.io/badge/Azure-Cognitive%20Services-0089D6?logo=microsoftazure&logoColor=white)
 
-O fluxo roda no Google Colab pelo notebook `notebooks/main.ipynb`, que baixa o dataset oficial sozinho.
-Nenhum vídeo precisa ser enviado.
+**Tech Challenge Fase 4**
 
-## O que o código faz
+Este projeto é um sistema de monitoramento inteligente desenvolvido para ambientes clínicos e cirúrgicos. Ele utiliza a **fusão de dados multimodais (Vídeo, Áudio, Sinais Vitais e Prescrições)** para detectar anomalias, calcular um Score de Risco unificado e despachar alertas preventivos em tempo real para equipes médicas, visando mitigar falhas operacionais e aumentar a segurança do paciente.
 
-1. **Baixa e converte** o pacote CholecT50 Challenge Validation (5 clipes) para o formato YOLO, dividindo por clipe.
-2. **Treina** o YOLOv8 (fine-tuning a partir de pesos COCO) e avalia num clipe de teste nunca visto.
-3. **Analisa** um clipe cirúrgico: detecta os instrumentos em cada frame e calcula três indicadores:
-   - `instrumento_fora_do_campo`: detecções fora da zona central da imagem;
-   - `movimento_brusco_instrumento`: deslocamento abrupto de um instrumento entre frames adjacentes;
-   - `ausencia_prolongada_de_instrumentos`: muitos frames seguidos sem instrumento, com a câmera dentro do corpo.
-4. **Gera** um relatório HTML e um vídeo anotado com as detecções.
+---
 
-Cada clipe é tratado como um paciente separado, com ID `CHOLECT-VIDxx`. O pacote não traz identificação de
-paciente; o ID é só uma convenção do projeto.
+## 📑 Índice
+- [🚀 Funcionalidades Principais](#-funcionalidades-principais)
+- [🧠 Arquitetura Multimodal](#-arquitetura-multimodal)
+- [📁 Estrutura do Projeto](#-estrutura-do-projeto)
+- [💻 Como Executar](#-como-executar)
+- [⚠️ Dados, Licença e Limitações](#️-dados-licença-e-limitações)
+- [📄 Relatório Técnico](#-relatório-técnico)
 
-## Estrutura (vídeo)
+---
 
-| Caminho | Conteúdo |
+## 🚀 Funcionalidades Principais 
+
+O sistema atende integralmente aos requisitos da Fase 4 através de três pilares de análise:
+
+### 1. Análise de Vídeo
+*   **Fisioterapia e Postura:** Utiliza **OpenPose / YOLOv8-pose** para detectar desvios posturais e movimentos fora do padrão durante exercícios.
+*   **Cirurgia (Laparoscopia):** Utiliza **YOLOv8** treinado via *fine-tuning* (dataset CholecT50) para detectar instrumentos cirúrgicos, medindo a ausência na cena, movimentos bruscos ou presença em zonas de risco.
+
+### 2. Análise de Áudio (Consultas Médicas)
+*   **Transcrição:** Processamento da fala do paciente para texto (preparado para **Azure Speech to Text**).
+*   **NLP e Sentimento:** Extração de termos críticos de risco (ex: "dor no peito", "falta de ar") usando lógica de NLP (preparado para **Azure Text Analytics**).
+*   **Fadiga Vocal:** Extração de *features* acústicas via Librosa (Jitter, RMS, taxa de fala, pausas) para identificar sinais físicos de fraqueza ou disartria.
+
+### 3. Detecção de Anomalias (Séries Temporais)
+*   **Sinais Vitais:** Identifica deterioração clínica monitorando Frequência Cardíaca, Pressão Arterial e SpO2 através de limites críticos, Z-Score móvel e modelos de ML não supervisionados (**Isolation Forest**).
+*   **Evolução de Prescrições:** Motor de regras que dispara alertas para mudanças abruptas de dosagem ou interações medicamentosas perigosas.
+
+---
+
+## 🧠 Arquitetura Multimodal
+
+O fluxo de dados do projeto ocorre da seguinte maneira:
+
+```mermaid
+graph TD
+    %% Entradas
+    V[🎥 Vídeo] --> OP[YOLOv8 & OpenPose]
+    A[🎙️ Áudio] --> STT[Speech to Text & Librosa]
+    S[📈 Vitais] --> IF[Isolation Forest & Z-Score]
+    P[💊 Prescrições] --> RE[Motor de Regras]
+
+    %% Processamento
+    OP --> |Desvios e Instrumentos| F((🧠 Módulo de Fusão))
+    STT --> |Termos Críticos e Fadiga| F
+    IF --> |Anomalias Clínicas| F
+    RE --> |Alertas de Interação| F
+
+    %% Saída
+    F --> |Score de Risco Consolidado| AL[🚨 Alert Dispatcher]
+    AL --> T[💬 Microsoft Teams / Painel]
+```
+
+---
+
+## 📁 Estrutura do Projeto
+
+| Caminho | Descrição do Componente |
 |---|---|
-| `notebooks/main.ipynb` | Fluxo completo no Colab: download, conversão, treino, avaliação e análise do clipe |
-| `src/video/surgical_tools.py` | Detector (`SurgicalToolAnalyzer`) e regras de indicadores (`analyze_detections`) |
-| `src/video/report.py` | Relatório HTML |
-| `src/pipeline.py` | Execução por linha de comando (`--video-type surgery`) |
-| `scripts/prepare_cholect50_yolo.py` | Descobre o layout do pacote, converte rótulos para YOLO e divide por clipe |
-| `scripts/train_yolo_cholect50.py` | Treino e avaliação no clipe de teste |
-| `tests/` | Testes (`pytest`) dos indicadores e da conversão |
-| `docs/cholect50.md` | Dados, licença, limitações e status de validação |
+| 📓 `notebooks/main.ipynb` | Fluxo otimizado para o Google Colab: treinamento do YOLOv8 no CholecT50 e inferência. |
+| ⚙️ `src/pipeline.py` | Orquestrador principal. Roda todo o pipeline multimodal via linha de comando. |
+| 🧠 `src/anomaly/` | Detecção de anomalias temporais: `vitals.py` (Isolation Forest) e `prescriptions.py`. |
+| 🎙️ `src/audio/` | Processamento de som: Transcritor, Text Analyzer (termos críticos) e Voice Features (Librosa). |
+| 🎥 `src/video/` | Visão computacional: `pose_analyzer.py` (OpenPose) e `surgical_tools.py` (YOLOv8). |
+| 🚨 `src/alerts/` | Roteamento de alertas (JSONL, Azure Event Grid e webhook Teams). |
+| 🧪 `tests/` | Suíte de testes automatizados (`pytest`) validando os algoritmos de anomalia. |
 
-## Como rodar no Google Colab
+---
 
-1. Abra `notebooks/main.ipynb` no Colab, por *Arquivo → Abrir notebook → GitHub* ou pelo link
-   `https://colab.research.google.com/github/<usuario>/<repositorio>/blob/main/notebooks/main.ipynb`.
-2. Escolha GPU (T4) em *Ambiente de execução → Alterar tipo*.
-3. Preencha `REPO_URL` na primeira célula com o endereço deste repositório. Se o repositório for privado,
-   crie o segredo `GITHUB_TOKEN` em 🔑 *Segredos*, com um token de leitura, e ative *Acesso ao notebook*.
-   Nas próximas execuções, o código é atualizado com `git pull`.
-4. Execute as células em ordem.
+## 💻 Como Executar
 
-## Como rodar localmente
+### 1. Ambiente Local (Pipeline Completo Multimodal)
+
+**Pré-requisitos:** Python 3.9+ e dependências instaladas.
 
 ```bash
+# Crie e ative o ambiente virtual
 python -m venv .venv && source .venv/bin/activate
+
+# Instale as dependências
 pip install -r requirements.txt
+
+# Execute a suíte de testes (valida a lógica de anomalias de vitais e áudio)
 pytest
 
-# Conversão, treino e análise (requer o pacote CholecT50 baixado e GPU recomendada)
-python scripts/prepare_cholect50_yolo.py --src /caminho/CholecT50 --out data/cholect50_yolo --dry-run
-python scripts/prepare_cholect50_yolo.py --src /caminho/CholecT50 --out data/cholect50_yolo
-python scripts/train_yolo_cholect50.py --data data/cholect50_yolo/cholect50_yolo.yaml --device 0
-python -m src.pipeline --patient CHOLECT-VID75 --video-type surgery --video data/raw/cirurgia.mp4
+# Rode o orquestrador multimodal completo simulando um paciente (Ex: P001)
+# Este comando aciona a fusão de Vídeo (pose), Áudio, Vitais e Prescrições.
+python -m src.pipeline --patient P001 \
+    --video data/raw/fisio.mp4 \
+    --audio data/samples/audio/consulta_P001_alerta.wav \
+    --vitals data/samples/vitals_P001.csv \
+    --prescriptions data/samples/prescriptions_P001.csv
 ```
 
-O pesos treinados ficam em `models/` (ignorado pelo Git). Ajuste `SURGICAL_MODEL` no `.env` se usar outro arquivo.
+### 2. Google Colab (Foco no Treinamento de Vídeo Cirúrgico)
+Para treinar e testar a parte pesada de processamento de imagem (YOLOv8 no dataset CholecT50):
+1. Abra o arquivo `notebooks/main.ipynb` no Colab.
+2. Altere o ambiente de execução para **GPU (T4)**.
+3. Insira o link deste repositório na variável `REPO_URL` e execute as células.
 
-## Publicar no GitHub
+---
 
-```bash
-git init -b main
-git add .
-git status            # confira que não aparecem .env, dados do dataset nem pesos (*.pt)
-git commit -m "Análise de vídeo cirúrgico com YOLOv8 e CholecT50"
-git remote add origin https://github.com/<usuario>/<repositorio>.git
-git push -u origin main
-```
+## ⚠️ Dados, Licença e Limitações
 
-## Dados, licença e limitações
+*   **Dados Sintéticos para MVP:** A fim de respeitar a **LGPD** e garantir a privacidade *by design*, este projeto utilizou consultas médicas sintéticas geradas via conversor Text-to-Speech (TTS) e geração matemática simulada de sinais vitais. Nenhuma gravação de paciente real está incluída no repositório.
+*   **Vídeo Laparoscópico:** Utiliza o dataset **CholecT50**, sob licença **CC BY-NC-SA 4.0** (uso não comercial). *Citação: C.I. Nwoye et al., Medical Image Analysis, 78 (2022).*
+*   **Integração Azure:** A arquitetura do código (`src/audio/transcriber.py`) e dos alertas contempla as integrações oficiais com Azure Cognitive Services e Event Grid. No entanto, sua execução plena depende da injeção de chaves de API válidas no arquivo `.env`. Um *fallback* via API HTTP genérica foi configurado para demonstração funcional.
 
-- **Dataset:** CholecT50, licença **CC BY-NC-SA 4.0** (uso não comercial). Não é versionado neste repositório;
-  o notebook o baixa do servidor oficial do CAMMA.
-  Cite: C.I. Nwoye et al., *Rendezvous: Attention Mechanisms for the Recognition of Surgical Action Triplets in
-  Endoscopic Videos*, Medical Image Analysis, 78 (2022) 102433.
-- **Restrição de publicação:** a página do desafio CholecTriplet2022 informa que publicar resultados sobre o
-  conjunto de validação não era permitido até a publicação conjunta do desafio. Verifique a situação atual
-  antes de divulgar o trabalho fora da disciplina.
-- **Poucos dados:** o pacote tem 5 clipes com frames **não contínuos** (espalhados no tempo). As métricas
-  variam muito conforme o clipe de teste.
-- **Sem rótulo de erro cirúrgico:** o CholecT50 só traz caixas de instrumentos. Os indicadores são heurísticas
-  de triagem para revisão humana, não diagnóstico nem julgamento do procedimento. Só a detecção dos
-  instrumentos (mAP) tem métrica validável contra o dataset.
-- **Tempo:** a coordenada temporal é o número do frame original. Tempo em segundos só é interpretável em vídeo
-  contínuo.
-- **Pose:** não há análise de postura nesta versão. OpenPose não se aplica a imagens laparoscópicas.
-- **Dados de saúde:** o repositório não versiona vídeos nem dados de pacientes (`data/raw` está no `.gitignore`).
-  Mantenha assim se trabalhar com dados reais (LGPD).
+---
 
-Detalhes, resultados medidos e status de validação em [`docs/cholect50.md`](docs/cholect50.md).
+## 📄 Relatório Técnico
+Para obter informações aprofundadas sobre a arquitetura, métricas, e detalhes da fusão *Late Fusion*, consulte o **Relatório Técnico Oficial**:
+👉 **[Leia o Relatório Técnico Completo Aqui](docs/relatorio_tecnico.md)**
+
+<br>
+<p align="center">
+  <i>Desenvolvido para o Tech Challenge Fase 4 · FIAP</i>
+</p>
